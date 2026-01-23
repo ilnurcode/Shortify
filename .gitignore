@@ -1,0 +1,42 @@
+# Виртуальное окружение
+.venv/
+venv/
+env/
+
+# Python байт-код
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Логи
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Alembic / миграции кэш
+src/alembic/__pycache__/
+src/alembic/versions/__pycache__/
+
+# Секреты
+.env
+.env.docker
+# Файлы локальных настроек
+*.local
+*.secret
+
+# Docker локальные файлы
+docker-compose.override.yml
+*.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# SQLite / локальные базы данных
+*.sqlite
+*.db
+
+# Сторонние кэшированные файлы (если появляются)
+.ruff_cache/

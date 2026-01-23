@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+
+  redis_container:
+    image: redis:8
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/var/lib/redis/data
+
+
+  web:
+    build: .
+    restart: on-failure
+    env_file:
+      - .env.docker
+    working_dir: /app
+    ports:
+      - 8000:8000
+    entrypoint:
+      - "/app/scripts/entrypoint.sh"
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      BASE_URL: ${BASE_URL}
+      REDIS_URL: redis_container
+      REDIS_PORT: ${REDIS_PORT}
+      DB_PORT: ${DB_PORT}
+      DB_HOST: db
+    command: [ "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000" ]
+volumes:
+  db_data:
+  redis_data:

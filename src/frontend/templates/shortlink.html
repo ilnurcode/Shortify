@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Укорачиватель ссылок</title>
+</head>
+<body>
+<h1>Создать короткую ссылку</h1>
+
+<form id="shortForm" autocomplete="off">
+    <label>Длинная ссылка<br><input name="link" type="url" placeholder="http://example.com" required></label>
+    <br>
+    <button type="submit">Укоротить</button>
+</form>
+
+<div id="info" aria-live="polite"></div>
+<div id="result"></div>
+
+<hr>
+<a href="/">
+    <button type="button">На главную</button>
+</a>
+<script src="/static/js/auth.js"></script>
+<script src="/static/js/shortlink.js"></script>
+</body>
+</html>
