@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Request, Response
 from fastapi.templating import Jinja2Templates
-from starlette import status
-
 from src.backend.schemas.schemas import BASE_DIR
 
 router = APIRouter()

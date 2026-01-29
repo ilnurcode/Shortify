@@ -1,6 +1,6 @@
 import secrets
 from src.backend.services.database import SessionDep
-from fastapi import Response
+from fastapi import Response, HTTPException
 import jwt
 import bcrypt
 import hashlib
@@ -47,6 +47,8 @@ class RefreshTokenService:
 
     @staticmethod
     def get_hashed_token(token: str):
+        if not token:
+            raise HTTPException(status_code=401, detail="Отсутствует refresh token")
         return hashlib.sha256(token.encode()).hexdigest()
 
     @classmethod

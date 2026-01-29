@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import asyncpg
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
@@ -46,3 +48,19 @@ class CredsSchema(LoginCredsSchema):
 
 class LinkSchema(BaseModel):
     link: str = Field(min_length=1, max_length=2048, pattern=r"^.+/..+")
+
+
+class LinksOutSchema(BaseModel):
+    long: str
+    short: str
+    created_at: datetime
+    clicks: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AccountOutSchema(BaseModel):
+    username: str
+    links: list[LinksOutSchema]
+
+    model_config = ConfigDict(from_attributes=True)

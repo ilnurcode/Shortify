@@ -26,16 +26,14 @@ def shortlink(request: Request):
     "/shortlink", summary="Создание короткой ссылки", tags=["Работа со ссылками"]
 )
 async def create_short_link(
-    link: LinkSchema,
-    user=Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
+    link: LinkSchema, session: SessionDep, user=Depends(get_current_user)
 ):
     """
     Эндпоинт для создания короткой ссылки, принимает длинную ссылку и отдает короткую.
     """
     if await RedisLimiter.add_link_limit(user.id):
         raise HTTPException(status_code=429, detail="Слишком много запросов")
-    short = await ShortLinkService.create_short_link(link.link, user.id, session)
+    short = await ShortLinkService.create_short_link(link.link, session, user.id)
     short_url = f"http://{settings.base_url}/{short}"
     return {"short_url": short_url}
 

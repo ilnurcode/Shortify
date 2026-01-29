@@ -18,6 +18,8 @@ async def refresh(request: Request, session: SessionDep):
     refresh_token = RefreshTokenService.get_hashed_token(
         request.cookies.get("refresh_token")
     )
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Отсутствует refresh token")
     user_id = await RefreshTokenService.find_user_by_refresh_token(
         hashed_token=refresh_token, session=session
     )

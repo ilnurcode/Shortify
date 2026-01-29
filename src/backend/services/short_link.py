@@ -19,7 +19,7 @@ class ShortLinkService:
         return result
 
     @classmethod
-    async def create_short_link(cls, long: str, user: UUID, session: AsyncSession):
+    async def create_short_link(cls, long: str, session: AsyncSession, user: UUID):
         result = await session.execute(
             select(LinkModel).where(LinkModel.long == long, LinkModel.user_id == user)
         )
@@ -43,3 +43,10 @@ class ShortLinkService:
         await session.commit()
         await session.refresh(link)
         return link.short
+
+    @classmethod
+    async def find_links_by_user(cls, session: AsyncSession, user_id: UUID):
+        result = await session.execute(
+            select(LinkModel).where(LinkModel.user_id == user_id)
+        )
+        return result.scalars().all()

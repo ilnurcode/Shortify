@@ -1,3 +1,4 @@
+// auth.js — лёгкая auth-утилита с initPromise
 (function () {
     const TOKEN_KEY = 'access_token';
 
@@ -17,7 +18,7 @@
                 console.log('auth: access_token removed');
             } else {
                 sessionStorage.setItem(TOKEN_KEY, token);
-                console.log('auth: access_token saved (len=' + token.length + ')');
+                console.log('auth: access_token saved (len=' + (token?.length ?? 0) + ')');
             }
         } catch (err) {
             console.error('auth.setAccessToken error', err);
@@ -33,7 +34,6 @@
 
         if (!res.ok) {
             console.warn('auth.refreshAccessToken: refresh returned', res.status);
-            // ВАЖНО: не удаляем access_token здесь — это может стереть валидный токен после редиректа
             throw new Error('Not authenticated');
         }
 
@@ -68,12 +68,11 @@
             console.warn('auth.authFetch: request returned 401, will try refresh');
         }
 
-        // Попробуем обновить токен (если это возможно)
         try {
             token = await refreshAccessToken();
         } catch (err) {
             console.warn('auth.authFetch: refresh failed, proceeding without token');
-            return fetch(url, opts); // вернём оригинальный fetch (скорее всего 401)
+            return fetch(url, opts);
         }
 
         opts.headers.Authorization = `Bearer ${token}`;
@@ -84,19 +83,59 @@
         return !!getAccessToken();
     }
 
-    function initAuthOnLoad() {
+    // init state + promise для ожидания
+    let _initDone = false;
+    let _initResolve;
+    const initPromise = new Promise((resolve) => {
+        _initResolve = resolve;
+    });
+
+    function setInitDone(val = true) {
+        _initDone = !!val;
+
+        // Попытка безопасно обновить поле initDone на window.auth,
+        // но только если там есть сеттер (иначе не пробуем — чтобы не вызывать TypeError).
+        try {
+            if (window.auth) {
+                const desc = Object.getOwnPropertyDescriptor(window.auth, 'initDone');
+                // если дескриптор отсутствует (undefined) — можно присвоить,
+                // или если есть сеттер (desc.set) — тоже можно присвоить.
+                if (!desc || typeof desc.set === 'function') {
+                    window.auth.initDone = _initDone;
+                }
+            }
+        } catch (e) {
+            // безопасно игнорируем любые ошибки — это лишь попытка оповестить внешние коды
+            console.warn('setInitDone: could not write window.auth.initDone', e);
+        }
+
+        if (_initResolve) {
+            _initResolve(_initDone);
+            _initResolve = null;
+        }
+    }
+
+
+    async function initAuthOnLoad() {
         try {
             const token = getAccessToken();
             console.log('auth.initAuthOnLoad: token exists?', !!token);
-            // Если токен уже есть — не дергаем refresh
-            if (token) return;
+            if (token) {
+                setInitDone(true);
+                return;
+            }
 
-            // Токена нет — пытаемся тихо обновить (не удаляем ничего при неудаче)
-            refreshAccessToken().catch(err => {
+            try {
+                await refreshAccessToken();
+                console.log('auth.initAuthOnLoad: refreshed token');
+            } catch (err) {
                 console.log('auth.initAuthOnLoad: no refresh (user not logged in)');
-            });
+            } finally {
+                setInitDone(true);
+            }
         } catch (err) {
             console.error('auth.initAuthOnLoad error', err);
+            setInitDone(true);
         }
     }
 
@@ -104,14 +143,21 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initAuthOnLoad);
     } else {
-        initAuthOnLoad();
+        setTimeout(initAuthOnLoad, 0);
     }
 
+    // экспорт
     window.auth = {
         getAccessToken,
         setAccessToken,
         refreshAccessToken,
         authFetch,
         isAuthenticated,
+        initPromise,
+        get initDone() {
+            return _initDone;
+        }
     };
+
+    console.log('[auth] loaded');
 })();
